@@ -1,8 +1,7 @@
 
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var driver = require("./driver.js");
-  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert, misMatch = driver.misMatch;
-  var acorn = require("../acorn");
+  var test = driver.test, testFail = driver.testFail;
 }
 
 //------------------------------------------------------------------------------
@@ -140,13 +139,13 @@ test("({a,...obj1,b:1,...obj2,c:2})", {
               "end": 3,
               "name": "a"
             },
-            "kind": "init",
             "value": {
               "type": "Identifier",
               "start": 2,
               "end": 3,
               "name": "a"
-            }
+            },
+            "kind": "init"
           },
           {
             "type": "SpreadElement",
@@ -289,13 +288,13 @@ test("({...a,b,c})", {
               "end": 8,
               "name": "b"
             },
-            "kind": "init",
             "value": {
               "type": "Identifier",
               "start": 7,
               "end": 8,
               "name": "b"
-            }
+            },
+            "kind": "init"
           },
           {
             "type": "Property",
@@ -310,13 +309,13 @@ test("({...a,b,c})", {
               "end": 10,
               "name": "c"
             },
-            "kind": "init",
             "value": {
               "type": "Identifier",
               "start": 9,
               "end": 10,
               "name": "c"
-            }
+            },
+            "kind": "init"
           }
         ]
       }
@@ -375,13 +374,13 @@ test("({...(a,b),c})", {
               "end": 12,
               "name": "c"
             },
-            "kind": "init",
             "value": {
               "type": "Identifier",
               "start": 11,
               "end": 12,
               "name": "c"
-            }
+            },
+            "kind": "init"
           }
         ]
       }
@@ -472,13 +471,13 @@ test("({a,...obj} = foo)", {
                 "end": 3,
                 "name": "a"
               },
-              "kind": "init",
               "value": {
                 "type": "Identifier",
                 "start": 2,
                 "end": 3,
                 "name": "a"
-              }
+              },
+              "kind": "init"
             },
             {
               "type": "RestElement",
@@ -711,13 +710,13 @@ test("({a,...obj}) => {}", {
                   "end": 3,
                   "name": "a"
                 },
-                "kind": "init",
                 "value": {
                   "type": "Identifier",
                   "start": 2,
                   "end": 3,
                   "name": "a"
-                }
+                },
+                "kind": "init"
               },
               {
                 "type": "RestElement",
@@ -814,6 +813,119 @@ test("({a:b,...obj}) => {}", {
   "sourceType": "script"
 }, { ecmaVersion: 9 })
 
+test("({...(obj)} = foo)", {
+  type: "Program",
+  start: 0,
+  end: 18,
+  loc: {
+    start: {
+      line: 1,
+      column: 0
+    },
+    end: {
+      line: 1,
+      column: 18
+    }
+  },
+  body: [
+    {
+      type: "ExpressionStatement",
+      start: 0,
+      end: 18,
+      loc: {
+        start: {
+          line: 1,
+          column: 0
+        },
+        end: {
+          line: 1,
+          column: 18
+        }
+      },
+      expression: {
+        type: "AssignmentExpression",
+        start: 1,
+        end: 17,
+        loc: {
+          start: {
+            line: 1,
+            column: 1
+          },
+          end: {
+            line: 1,
+            column: 17
+          }
+        },
+        operator: "=",
+        left: {
+          type: "ObjectPattern",
+          start: 1,
+          end: 11,
+          loc: {
+            start: {
+              line: 1,
+              column: 1
+            },
+            end: {
+              line: 1,
+              column: 11
+            }
+          },
+          properties: [
+            {
+              type: "RestElement",
+              start: 2,
+              end: 10,
+              loc: {
+                start: {
+                  line: 1,
+                  column: 2
+                },
+                end: {
+                  line: 1,
+                  column: 10
+                }
+              },
+              argument: {
+                type: "Identifier",
+                start: 6,
+                end: 9,
+                loc: {
+                  start: {
+                    line: 1,
+                    column: 6
+                  },
+                  end: {
+                    line: 1,
+                    column: 9
+                  }
+                },
+                name: "obj"
+              }
+            }
+          ]
+        },
+        right: {
+          type: "Identifier",
+          start: 14,
+          end: 17,
+          loc: {
+            start: {
+              line: 1,
+              column: 14
+            },
+            end: {
+              line: 1,
+              column: 17
+            }
+          },
+          name: "foo"
+        }
+      }
+    }
+  ],
+}, { ecmaVersion: 9, locations: true })
+
 testFail("let {...obj1,} = foo", "Comma is not permitted after the rest element (1:12)", { ecmaVersion: 9 })
 testFail("let {...obj1,a} = foo", "Comma is not permitted after the rest element (1:12)", { ecmaVersion: 9 })
 testFail("let {...obj1,...obj2} = foo", "Comma is not permitted after the rest element (1:12)", { ecmaVersion: 9 })
@@ -824,8 +936,7 @@ testFail("let {...[a,b]} = foo", "Unexpected token (1:8)", { ecmaVersion: 9 })
 testFail("({...obj1,} = foo)", "Comma is not permitted after the rest element (1:9)", { ecmaVersion: 9 })
 testFail("({...obj1,a} = foo)", "Comma is not permitted after the rest element (1:9)", { ecmaVersion: 9 })
 testFail("({...obj1,...obj2} = foo)", "Comma is not permitted after the rest element (1:9)", { ecmaVersion: 9 })
-testFail("({...(obj)} = foo)", "Parenthesized pattern (1:5)", { ecmaVersion: 9 })
-testFail("({...(a,b)} = foo)", "Parenthesized pattern (1:5)", { ecmaVersion: 9 })
+testFail("({...(a,b)} = foo)", "Assigning to rvalue (1:5)", { ecmaVersion: 9 })
 testFail("({...{a,b}} = foo)", "Unexpected token (1:5)", { ecmaVersion: 9 })
 testFail("({...[a,b]} = foo)", "Unexpected token (1:5)", { ecmaVersion: 9 })
 testFail("({...obj} = foo)", "Unexpected token (1:2)", { ecmaVersion: 8 })
@@ -1178,13 +1289,13 @@ test("let {x, ...y} = v", {
                   "end": 6,
                   "name": "x"
                 },
-                "kind": "init",
                 "value": {
                   "type": "Identifier",
                   "start": 5,
                   "end": 6,
                   "name": "x"
-                }
+                },
+                "kind": "init"
               },
               {
                 "type": "RestElement",
@@ -1247,13 +1358,13 @@ test("(function({x, ...y}) {})", {
                   "end": 12,
                   "name": "x"
                 },
-                "kind": "init",
                 "value": {
                   "type": "Identifier",
                   "start": 11,
                   "end": 12,
                   "name": "x"
-                }
+                },
+                "kind": "init"
               },
               {
                 "type": "RestElement",
@@ -1326,7 +1437,6 @@ test("const fn = ({text = \"default\", ...props}) => text + props.children", {
                       "end": 17,
                       "name": "text"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 13,
@@ -1344,7 +1454,8 @@ test("const fn = ({text = \"default\", ...props}) => text + props.children", {
                         "value": "default",
                         "raw": "\"default\""
                       }
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "RestElement",

@@ -1,6 +1,6 @@
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var driver = require("./driver.js");
-  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert, misMatch = driver.misMatch;
+  var test = driver.test, testFail = driver.testFail;
 }
 
 //------------------------------------------------------------------------------
@@ -6391,3 +6391,10 @@ testFail(`class C {
     return #brand in #brand in obj;
   }
 }`, 'Private identifier can only be left side of binary expression (5:21)', { ecmaVersion: 13 })
+
+testFail(`class X { static { return; } }`, "'return' outside of function (1:19)", {allowReturnOutsideFunction: true, ecmaVersion: 13});
+
+test("class C { x = () => { arguments: 1 } }", {}, {ecmaVersion: 13})
+test("class C { static { arguments: for (;;) { break arguments } } }", {}, {ecmaVersion: 13})
+
+test("class C { x = 1\n\\u{69}n }", {}, {ecmaVersion: 13})

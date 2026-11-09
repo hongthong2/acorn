@@ -7,20 +7,23 @@ import {SourceLocation} from "./locutil.js"
 export const defaultOptions = {
   // `ecmaVersion` indicates the ECMAScript version to parse. Must be
   // either 3, 5, 6 (or 2015), 7 (2016), 8 (2017), 9 (2018), 10
-  // (2019), 11 (2020), 12 (2021), 13 (2022), or `"latest"` (the
-  // latest version the library supports). This influences support
-  // for strict mode, the set of reserved words, and support for
-  // new syntax features.
+  // (2019), 11 (2020), 12 (2021), 13 (2022), 14 (2023), or `"latest"`
+  // (the latest version the library supports). This influences
+  // support for strict mode, the set of reserved words, and support
+  // for new syntax features.
   ecmaVersion: null,
   // `sourceType` indicates the mode the code should be parsed in.
-  // Can be either `"script"` or `"module"`. This influences global
+  // Can be either `"script"`, `"module"` or `"commonjs"`. This influences global
   // strict mode and parsing of `import` and `export` declarations.
   sourceType: "script",
-  // `onInsertedSemicolon` can be a callback that will be called
-  // when a semicolon is automatically inserted. It will be passed
-  // the position of the comma as an offset, and if `locations` is
-  // enabled, it is given the location as a `{line, column}` object
-  // as second argument.
+  // When set to true, enable strict parsing mode even if `sourceType`
+  // is `"script"`.
+  strict: false,
+  // `onInsertedSemicolon` can be a callback that will be called when
+  // a semicolon is automatically inserted. It will be passed the
+  // position of the inserted semicolon as an offset, and if
+  // `locations` is enabled, it is given the location as a `{line,
+  // column}` object as second argument.
   onInsertedSemicolon: null,
   // `onTrailingComma` is similar to `onInsertedSemicolon`, but for
   // trailing commas.
@@ -44,14 +47,24 @@ export const defaultOptions = {
   // When enabled, super identifiers are not constrained to
   // appearing in methods and do not raise an error when they appear elsewhere.
   allowSuperOutsideMethod: null,
-  // When enabled, hashbang directive in the beginning of file
-  // is allowed and treated as a line comment.
+  // When enabled, hashbang directive in the beginning of file is
+  // allowed and treated as a line comment. Enabled by default when
+  // `ecmaVersion` >= 2023.
   allowHashBang: false,
+  // By default, the parser will verify that private properties are
+  // only used in places where they are valid and have been declared.
+  // Set this to false to turn such checks off.
+  checkPrivateFields: true,
   // When `locations` is on, `loc` properties holding objects with
   // `start` and `end` properties in `{line, column}` form (with
   // line being 1-based and column 0-based) will be attached to the
   // nodes.
   locations: false,
+  // Pass an optional `{line, column}` object to use for the start of
+  // the parse. This is mostly useful when using `parseExpressionAt`
+  // with `locations: true`, to prevent the parser from having to
+  // determine the line position at the start position.
+  startLocation: null,
   // A function can be passed as `onToken` option, which will
   // cause Acorn to call that function with object in the same
   // format as tokens returned from `tokenizer().getToken()`. Note
@@ -68,6 +81,8 @@ export const defaultOptions = {
   // passed, the full `{line, column}` locations of the start and
   // end of the comments. Note that you are not allowed to call the
   // parser from the callback—that will corrupt its internal state.
+  // When this option has an array as value, objects representing the
+  // comments are pushed to it.
   onComment: null,
   // Nodes have their start and end characters offsets recorded in
   // `start` and `end` properties (directly on the node, rather than
@@ -120,12 +135,18 @@ export function getOptions(opts) {
   if (options.allowReserved == null)
     options.allowReserved = options.ecmaVersion < 5
 
+  if (!opts || opts.allowHashBang == null)
+    options.allowHashBang = options.ecmaVersion >= 14
+
   if (isArray(options.onToken)) {
     let tokens = options.onToken
     options.onToken = (token) => tokens.push(token)
   }
   if (isArray(options.onComment))
     options.onComment = pushComment(options, options.onComment)
+
+  if (options.sourceType === "commonjs" && options.allowAwaitOutsideFunction)
+    throw new Error("Cannot use allowAwaitOutsideFunction with sourceType: commonjs")
 
   return options
 }

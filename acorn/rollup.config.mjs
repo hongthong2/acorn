@@ -1,4 +1,9 @@
+import {readFile, writeFile} from "node:fs/promises"
 import buble from "@rollup/plugin-buble"
+
+const copy = (from, to) => ({
+  async writeBundle() { await writeFile(to, await readFile(from)) }
+})
 
 export default [
   {
@@ -15,7 +20,9 @@ export default [
       }
     ],
     plugins: [
-      buble({transforms: {dangerousForOf: true}})
+      buble({transforms: {dangerousForOf: true}}),
+      copy("acorn/src/acorn.d.ts", "acorn/dist/acorn.d.ts"),
+      copy("acorn/src/acorn.d.ts", "acorn/dist/acorn.d.mts")
     ]
   },
   {

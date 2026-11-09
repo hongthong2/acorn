@@ -79,7 +79,8 @@ pp.updateContext = function(prevType) {
     this.exprAllowed = type.beforeExpr
 }
 
-// Used to handle egde case when token context could not be inferred correctly in tokenize phase
+// Used to handle edge cases when token context could not be inferred correctly during tokenization phase
+
 pp.overrideContext = function(tokenCtx) {
   if (this.curContext() !== tokenCtx) {
     this.context[this.context.length - 1] = tokenCtx
@@ -129,6 +130,11 @@ tt._function.updateContext = tt._class.updateContext = function(prevType) {
   else
     this.context.push(types.f_stat)
   this.exprAllowed = false
+}
+
+tt.colon.updateContext = function() {
+  if (this.curContext().token === "function") this.context.pop()
+  this.exprAllowed = true
 }
 
 tt.backQuote.updateContext = function() {

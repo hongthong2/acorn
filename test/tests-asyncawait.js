@@ -1,8 +1,7 @@
 
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var driver = require("./driver.js");
-  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert, misMatch = driver.misMatch;
-  var acorn = require("../acorn");
+  var test = driver.test, testFail = driver.testFail;
 }
 
 //-----------------------------------------------------------------------------
@@ -560,7 +559,6 @@ test("async ({a = b}) => a", {
                                     "end": 9,
                                     "name": "a"
                                 },
-                                "kind": "init",
                                 "value": {
                                     "type": "AssignmentPattern",
                                     "start": 8,
@@ -577,7 +575,8 @@ test("async ({a = b}) => a", {
                                         "end": 13,
                                         "name": "b"
                                     }
-                                }
+                                },
+                                "kind": "init"
                             }
                         ]
                     }
@@ -916,7 +915,6 @@ test("({foo() { }})", {
                             "end": 5,
                             "name": "foo"
                         },
-                        "kind": "init",
                         "value": {
                             "type": "FunctionExpression",
                             "start": 5,
@@ -932,7 +930,8 @@ test("({foo() { }})", {
                                 "end": 11,
                                 "body": []
                             }
-                        }
+                        },
+                        "kind": "init"
                     }
                 ]
             }
@@ -969,7 +968,6 @@ test("({async foo() { }})", {
                             "end": 11,
                             "name": "foo"
                         },
-                        "kind": "init",
                         "value": {
                             "type": "FunctionExpression",
                             "start": 11,
@@ -985,7 +983,8 @@ test("({async foo() { }})", {
                                 "end": 17,
                                 "body": []
                             }
-                        }
+                        },
+                        "kind": "init"
                     }
                 ]
             }
@@ -1022,7 +1021,6 @@ test("({async() { }})", {
                             "end": 7,
                             "name": "async"
                         },
-                        "kind": "init",
                         "value": {
                             "type": "FunctionExpression",
                             "start": 7,
@@ -1038,7 +1036,8 @@ test("({async() { }})", {
                                 "end": 13,
                                 "body": []
                             }
-                        }
+                        },
+                        "kind": "init"
                     }
                 ]
             }
@@ -1083,7 +1082,6 @@ test("({async await() { }})", {
                             "end": 13,
                             "name": "await"
                         },
-                        "kind": "init",
                         "value": {
                             "type": "FunctionExpression",
                             "start": 13,
@@ -1099,7 +1097,8 @@ test("({async await() { }})", {
                                 "end": 19,
                                 "body": []
                             }
-                        }
+                        },
+                        "kind": "init"
                     }
                 ]
             }
@@ -1876,7 +1875,6 @@ test("({async foo(a) { await a }})", {
                             "end": 11,
                             "name": "foo"
                         },
-                        "kind": "init",
                         "value": {
                             "type": "FunctionExpression",
                             "start": 11,
@@ -1916,7 +1914,8 @@ test("({async foo(a) { await a }})", {
                                     }
                                 ]
                             }
-                        }
+                        },
+                        "kind": "init"
                     }
                 ]
             }
@@ -2401,7 +2400,6 @@ test("async function foo(a = {async bar() { await b }}) {}", {
                   "end": 33,
                   "name": "bar"
                 },
-                "kind": "init",
                 "value": {
                   "type": "FunctionExpression",
                   "start": 33,
@@ -2434,7 +2432,8 @@ test("async function foo(a = {async bar() { await b }}) {}", {
                       }
                     ]
                   }
-                }
+                },
+                "kind": "init"
               }
             ]
           }
@@ -2665,7 +2664,6 @@ test("async function wrap() {\n({a = await b} = obj)\n}", {
                       "end": 27,
                       "name": "a"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 26,
@@ -2687,7 +2685,8 @@ test("async function wrap() {\n({a = await b} = obj)\n}", {
                           "name": "b"
                         }
                       }
-                    }
+                    },
+                    "kind": "init"
                   }
                 ]
               },
@@ -2830,7 +2829,6 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 8,
                       "name": "w"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 7,
@@ -2853,7 +2851,8 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                         },
                         "arguments": []
                       }
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "Property",
@@ -2868,7 +2867,6 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 23,
                       "name": "x"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 22,
@@ -2891,7 +2889,8 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                         },
                         "arguments": []
                       }
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "Property",
@@ -2906,7 +2905,6 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 38,
                       "name": "y"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 37,
@@ -2929,7 +2927,8 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                         },
                         "arguments": []
                       }
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "Property",
@@ -2944,7 +2943,6 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 53,
                       "name": "z"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 52,
@@ -2967,7 +2965,8 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                         },
                         "arguments": []
                       }
-                    }
+                    },
+                    "kind": "init"
                   }
                 ]
               },
@@ -2989,14 +2988,14 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 73,
                       "name": "w"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "Literal",
                       "start": 75,
                       "end": 79,
                       "value": null,
                       "raw": "null"
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "Property",
@@ -3011,14 +3010,14 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 82,
                       "name": "x"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "Literal",
                       "start": 84,
                       "end": 85,
                       "value": 0,
                       "raw": "0"
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "Property",
@@ -3033,14 +3032,14 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 88,
                       "name": "y"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "Literal",
                       "start": 90,
                       "end": 95,
                       "value": false,
                       "raw": "false"
-                    }
+                    },
+                    "kind": "init"
                   },
                   {
                     "type": "Property",
@@ -3055,14 +3054,14 @@ test("f = ({ w = counter(), x = counter(), y = counter(), z = counter() } = { w:
                       "end": 98,
                       "name": "z"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "Literal",
                       "start": 100,
                       "end": 102,
                       "value": "",
                       "raw": "''"
-                    }
+                    },
+                    "kind": "init"
                   }
                 ]
               }
@@ -3143,13 +3142,13 @@ test(
                 "end": 7,
                 "name": "async"
               },
-              "kind": "init",
               "value": {
                 "type": "Identifier",
                 "start": 2,
                 "end": 7,
                 "name": "async"
-              }
+              },
+              "kind": "init"
             }
           ]
         }
@@ -3188,13 +3187,13 @@ test(
                 "end": 7,
                 "name": "async"
               },
-              "kind": "init",
               "value": {
                 "type": "Identifier",
                 "start": 2,
                 "end": 7,
                 "name": "async"
-              }
+              },
+              "kind": "init"
             },
             {
               "type": "Property",
@@ -3209,13 +3208,13 @@ test(
                 "end": 12,
                 "name": "foo"
               },
-              "kind": "init",
               "value": {
                 "type": "Identifier",
                 "start": 9,
                 "end": 12,
                 "name": "foo"
-              }
+              },
+              "kind": "init"
             }
           ]
         }
@@ -3259,7 +3258,6 @@ test(
                   "end": 7,
                   "name": "async"
                 },
-                "kind": "init",
                 "value": {
                   "type": "AssignmentPattern",
                   "start": 2,
@@ -3277,7 +3275,8 @@ test(
                     "value": 0,
                     "raw": "0"
                   }
-                }
+                },
+                "kind": "init"
               }
             ]
           },
@@ -3326,7 +3325,6 @@ test(
                 "value": "foo",
                 "raw": "\"foo\""
               },
-              "kind": "init",
               "value": {
                 "type": "FunctionExpression",
                 "start": 13,
@@ -3342,7 +3340,8 @@ test(
                   "end": 17,
                   "body": []
                 }
-              }
+              },
+              "kind": "init"
             }
           ]
         }
@@ -3382,7 +3381,6 @@ test(
                 "value": "foo",
                 "raw": "'foo'"
               },
-              "kind": "init",
               "value": {
                 "type": "FunctionExpression",
                 "start": 13,
@@ -3398,7 +3396,8 @@ test(
                   "end": 17,
                   "body": []
                 }
-              }
+              },
+              "kind": "init"
             }
           ]
         }
@@ -3438,7 +3437,6 @@ test(
                 "value": 100,
                 "raw": "100"
               },
-              "kind": "init",
               "value": {
                 "type": "FunctionExpression",
                 "start": 11,
@@ -3454,7 +3452,8 @@ test(
                   "end": 15,
                   "body": []
                 }
-              }
+              },
+              "kind": "init"
             }
           ]
         }
@@ -3493,7 +3492,6 @@ test(
                 "end": 12,
                 "name": "foo"
               },
-              "kind": "init",
               "value": {
                 "type": "FunctionExpression",
                 "start": 13,
@@ -3509,7 +3507,8 @@ test(
                   "end": 17,
                   "body": []
                 }
-              }
+              },
+              "kind": "init"
             }
           ]
         }
@@ -3541,3 +3540,16 @@ testFail("async() => await (5) ** 6", "Unexpected token (1:21)", {ecmaVersion: 8
 testFail("4 + async() => 2", "Unexpected token (1:12)", {ecmaVersion: 8, loose: false})
 
 testFail("async function𝐬 f() {}", "Unexpected token (1:17)", {ecmaVersion: 8})
+
+testFail("async () => class { x = await 1 }", "Unexpected token (1:30)", {ecmaVersion: 2024})
+
+test("async () => class { x = async () => await 1 }", {}, {ecmaVersion: 2024})
+
+test("async () => class { x = await }", {}, {ecmaVersion: 2024})
+
+testFail("async () => class { x = await }", "Cannot use keyword 'await' outside an async function (1:24)",
+         {ecmaVersion: 2024, sourceType: "module"})
+
+testFail("async function\\u1111() { }", "Unexpected token (1:20)", {ecmaVersion: 8})
+
+testFail("async(a)(b) => 1", "Unexpected token (1:12)", {ecmaVersion: 8})

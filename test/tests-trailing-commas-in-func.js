@@ -1,8 +1,7 @@
 
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var driver = require("./driver.js");
-  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert, misMatch = driver.misMatch;
-  var acorn = require("../acorn");
+  var test = driver.test, testFail = driver.testFail;
 }
 
 //------------------------------------------------------------------------------
@@ -183,7 +182,6 @@ test("({foo(a,) {}})", {
               "end": 5,
               "name": "foo"
             },
-            "kind": "init",
             "value": {
               "type": "FunctionExpression",
               "start": 5,
@@ -206,7 +204,8 @@ test("({foo(a,) {}})", {
                 "end": 12,
                 "body": []
               }
-            }
+            },
+            "kind": "init"
           }
         ]
       }

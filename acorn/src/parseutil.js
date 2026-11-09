@@ -1,35 +1,53 @@
 import {types as tt} from "./tokentype.js"
 import {Parser} from "./state.js"
-import {lineBreak, skipWhiteSpace} from "./whitespace.js"
+import {lineBreak, whitespaceRE} from "./whitespace.js"
+import {isIdentifierChar} from "./identifier.js"
 
 const pp = Parser.prototype
 
 // ## Parser utilities
 
-const literal = /^(?:'((?:\\.|[^'\\])*?)'|"((?:\\.|[^"\\])*?)")/
+const literal = /^(?:'((?:\\[^]|[^'\\])*?)'|"((?:\\[^]|[^"\\])*?)")/
 pp.strictDirective = function(start) {
+  if (this.options.ecmaVersion < 5) return false
+  let skip = whitespaceRE(this.inModule)
   for (;;) {
     // Try to find string literal.
-    skipWhiteSpace.lastIndex = start
-    start += skipWhiteSpace.exec(this.input)[0].length
+    skip.lastIndex = start
+    start += skip.exec(this.input)[0].length
     let match = literal.exec(this.input.slice(start))
     if (!match) return false
     if ((match[1] || match[2]) === "use strict") {
-      skipWhiteSpace.lastIndex = start + match[0].length
-      let spaceAfter = skipWhiteSpace.exec(this.input), end = spaceAfter.index + spaceAfter[0].length
+      skip.lastIndex = start + match[0].length
+      let spaceAfter = skip.exec(this.input), end = spaceAfter.index + spaceAfter[0].length
       let next = this.input.charAt(end)
       return next === ";" || next === "}" ||
         (lineBreak.test(spaceAfter[0]) &&
-         !(/[(`.[+\-/*%<>=,?^&]/.test(next) || next === "!" && this.input.charAt(end + 1) === "="))
+         !(/[(`.[+\-/*%<>=,?^&]/.test(next) ||
+           next === "!" && this.input.charAt(end + 1) === "=" ||
+           next === "i" && keywordOpAt(this, end)))
     }
     start += match[0].length
 
     // Skip semicolon, if any.
-    skipWhiteSpace.lastIndex = start
-    start += skipWhiteSpace.exec(this.input)[0].length
+    skip.lastIndex = start
+    start += skip.exec(this.input)[0].length
     if (this.input[start] === ";")
       start++
   }
+}
+
+// Scan for `in` or `instanceof` at the given position, knowing that
+// there's an `i` there.
+function keywordOpAt(parser, pos) {
+  let end = pos + 1, stop = Math.min(parser.input.length, pos + 11)
+  while (end < stop) {
+    let ch = parser.fullCharCodeAt(end)
+    if (!isIdentifierChar(ch, true)) break
+    end += ch <= 0xffff ? 1 : 2
+  }
+  return end === pos + 2 && parser.input.slice(pos, end) === "in" ||
+    end === pos + 10 && parser.input.slice(pos, end) === "instanceof"
 }
 
 // Predicate that tests whether the next token is of the given
@@ -56,6 +74,17 @@ pp.eatContextual = function(name) {
   if (!this.isContextual(name)) return false
   this.next()
   return true
+}
+
+pp.catchStackOverflow = function(f) {
+  try {
+    return f()
+  } catch (e) {
+    if (e instanceof Error && (/\bstack\b.*\b(exceeded|overflow)\b/i.test(e.message) || /\btoo much recursion\b/i.test(e.message)))
+      this.raise(this.start, "Not enough stack space to parse input")
+    else
+      throw e
+  }
 }
 
 // Asserts that following token is given contextual keyword.
@@ -110,13 +139,15 @@ pp.unexpected = function(pos) {
   this.raise(pos != null ? pos : this.start, "Unexpected token")
 }
 
-export function DestructuringErrors() {
-  this.shorthandAssign =
-  this.trailingComma =
-  this.parenthesizedAssign =
-  this.parenthesizedBind =
-  this.doubleProto =
-    -1
+export class DestructuringErrors {
+  constructor() {
+    this.shorthandAssign =
+    this.trailingComma =
+    this.parenthesizedAssign =
+    this.parenthesizedBind =
+    this.doubleProto =
+      -1
+  }
 }
 
 pp.checkPatternErrors = function(refDestructuringErrors, isAssign) {
@@ -124,7 +155,7 @@ pp.checkPatternErrors = function(refDestructuringErrors, isAssign) {
   if (refDestructuringErrors.trailingComma > -1)
     this.raiseRecoverable(refDestructuringErrors.trailingComma, "Comma is not permitted after the rest element")
   let parens = isAssign ? refDestructuringErrors.parenthesizedAssign : refDestructuringErrors.parenthesizedBind
-  if (parens > -1) this.raiseRecoverable(parens, "Parenthesized pattern")
+  if (parens > -1) this.raiseRecoverable(parens, isAssign ? "Assigning to rvalue" : "Parenthesized pattern")
 }
 
 pp.checkExpressionErrors = function(refDestructuringErrors, andThrow) {

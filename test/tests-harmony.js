@@ -29,7 +29,7 @@
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var test = require("./driver.js").test;
   var testFail = require("./driver.js").testFail;
 }
@@ -816,23 +816,23 @@ test("`\\n\\r\\b\\v\\t\\f\\\n\\\r\n\\\u2028\\\u2029`", {
         tail: true,
         loc: {
           start: {line: 1, column: 1},
-          end: {line: 3, column: 4}
+          end: {line: 5, column: 0}
         }
       }],
       expressions: [],
       loc: {
         start: {line: 1, column: 0},
-        end: {line: 3, column: 5}
+        end: {line: 5, column: 1}
       }
     },
     loc: {
       start: {line: 1, column: 0},
-      end: {line: 3, column: 5}
+      end: {line: 5, column: 1}
     }
   }],
   loc: {
     start: {line: 1, column: 0},
-    end: {line: 3, column: 5}
+    end: {line: 5, column: 1}
   }
 }, {
   ecmaVersion: 6,
@@ -1091,6 +1091,100 @@ test("`outer${{x: {y: 10}}}bar${`nested${function(){return 1;}}endnest`}end`",{
   ]
 }, {
   ecmaVersion: 6
+});
+
+test("foo`\n\\x\n$\n`;", {
+  type: "Program",
+  loc: {
+    start: {
+      line: 1,
+      column: 0
+    },
+    end: {
+      line: 4,
+      column: 2
+    }
+  },
+  body: [
+    {
+      type: "ExpressionStatement",
+      loc: {
+        start: {
+          line: 1,
+          column: 0
+        },
+        end: {
+          line: 4,
+          column: 2
+        }
+      },
+      expression: {
+        type: "TaggedTemplateExpression",
+        loc: {
+          start: {
+            line: 1,
+            column: 0
+          },
+          end: {
+            line: 4,
+            column: 1
+          }
+        },
+        tag: {
+          type: "Identifier",
+          loc: {
+            start: {
+              line: 1,
+              column: 0
+            },
+            end: {
+              line: 1,
+              column: 3
+            }
+          },
+          name: "foo"
+        },
+        quasi: {
+          type: "TemplateLiteral",
+          loc: {
+            start: {
+              line: 1,
+              column: 3
+            },
+            end: {
+              line: 4,
+              column: 1
+            }
+          },
+          expressions: [],
+          quasis: [
+            {
+              type: "TemplateElement",
+              loc: {
+                start: {
+                  line: 1,
+                  column: 4
+                },
+                end: {
+                  line: 4,
+                  column: 0
+                }
+              },
+              value: {
+                raw: "\n\\x\n$\n",
+                cooked: null
+              },
+              tail: true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  sourceType: "script"
+}, {
+  ecmaVersion: 10,
+  locations: true
 });
 
 
@@ -2542,6 +2636,8 @@ test("foo((x, y) => {})", {
   ranges: true,
   locations: true
 });
+
+testFail("() => {} ? 1 : 0", "Unexpected token (1:9)", {ecmaVersion: 6})
 
 // ES6: Method Definition
 
@@ -13089,7 +13185,7 @@ testFail("[v] += ary", "Assigning to rvalue (1:0)", {ecmaVersion: 6});
 
 testFail("[2] = 42", "Assigning to rvalue (1:1)", {ecmaVersion: 6});
 
-testFail("({ obj:20 }) = 42", "Parenthesized pattern (1:0)", {ecmaVersion: 6});
+testFail("({ obj:20 }) = 42", "Assigning to rvalue (1:0)", {ecmaVersion: 6});
 
 testFail("( { get x() {} } = 0)", "Object pattern can't contain getter or setter (1:8)", {ecmaVersion: 6});
 
@@ -13155,6 +13251,8 @@ testFail("function foo(a, a = 2) {}", "Argument name clash (1:16)", {ecmaVersion
 testFail("\"use strict\"; (a, a) => 42", "Argument name clash (1:18)", {ecmaVersion: 6});
 
 testFail("\"use strict\"; (a) => 00", "Invalid number (1:21)", {ecmaVersion: 6});
+
+test('function foo() { "use strict"\nin {}; 00 }', {}, {ecmaVersion: 6});
 
 testFail("() <= 42", "Unexpected token (1:1)", {ecmaVersion: 6});
 
@@ -14646,7 +14744,9 @@ test("let {x} = y", {
             "start": 4,
             "properties": [
               {
+                "type": "Property",
                 "start": 5,
+                "end": 6,
                 "method": false,
                 "shorthand": true,
                 "computed": false,
@@ -14656,15 +14756,13 @@ test("let {x} = y", {
                   "type": "Identifier",
                   "end": 6
                 },
-                "kind": "init",
                 "value": {
                   "start": 5,
                   "name": "x",
                   "type": "Identifier",
                   "end": 6
                 },
-                "type": "Property",
-                "end": 6
+                "kind": "init"
               }
             ],
             "type": "ObjectPattern",
@@ -14735,7 +14833,7 @@ test("for (var [name, value] in obj) {}", {
 testFail("let [x]", "Complex binding patterns require an initialization value (1:7)", {ecmaVersion: 6})
 testFail("var [x]", "Complex binding patterns require an initialization value (1:7)", {ecmaVersion: 6})
 testFail("var _𖫵 = 11;", "Unexpected character '𖫵' (1:5)", {ecmaVersion: 6});
-testFail("var 𫠞_ = 12;", "Unexpected character '𫠞' (1:4)", {ecmaVersion: 6});
+testFail("var 𯿾_ = 12;", "Unexpected character '𯿾' (1:4)", {ecmaVersion: 6});
 testFail("var 𫠝_ = 10;", "Unexpected character '𫠝' (1:4)", {ecmaVersion: 5});
 testFail("if (1) let x = 10;", "Unexpected token (1:11)", {ecmaVersion: 6});
 testFail("for (;;) const x = 10;", "Unexpected token (1:9)", {ecmaVersion: 6});
@@ -14779,9 +14877,9 @@ test("function foo() { new.target; }", {
 }, {ecmaVersion: 6});
 
 testFail("new.prop", "The only valid meta property for new is 'new.target' (1:4)", {ecmaVersion: 6});
-testFail("new.target", "'new.target' can only be used in functions and class static block (1:0)", {ecmaVersion: 6});
+testFail("new.target", "'new.target' can only be used in functions and class static block (1:0)", {ecmaVersion: 6, commonjs: false});
 test("function x() { return () => new.target }", {}, {ecmaVersion: 6});
-testFail("let y = () => new.target", "'new.target' can only be used in functions and class static block (1:14)", {ecmaVersion: 6});
+testFail("let y = () => new.target", "'new.target' can only be used in functions and class static block (1:14)", {ecmaVersion: 6, commonjs: false});
 
 test("export default function foo() {} false", {
   body: [
@@ -15087,13 +15185,13 @@ test("function foo() { return {arguments} }", {
                                         "end": 34,
                                         "name": "arguments"
                                     },
-                                    "kind": "init",
                                     "value": {
                                         "type": "Identifier",
                                         "start": 25,
                                         "end": 34,
                                         "name": "arguments"
-                                    }
+                                    },
+                                    "kind": "init"
                                 }
                             ]
                         }
@@ -15149,13 +15247,13 @@ test("function foo() { return {eval} }", {
                                         "end": 29,
                                         "name": "eval"
                                     },
-                                    "kind": "init",
                                     "value": {
                                         "type": "Identifier",
                                         "start": 25,
                                         "end": 29,
                                         "name": "eval"
-                                    }
+                                    },
+                                    "kind": "init"
                                 }
                             ]
                         }
@@ -15223,13 +15321,13 @@ test("function foo() { 'use strict'; return {arguments} }", {
                                         "end": 48,
                                         "name": "arguments"
                                     },
-                                    "kind": "init",
                                     "value": {
                                         "type": "Identifier",
                                         "start": 39,
                                         "end": 48,
                                         "name": "arguments"
-                                    }
+                                    },
+                                    "kind": "init"
                                 }
                             ]
                         }
@@ -15297,13 +15395,13 @@ test("function foo() { 'use strict'; return {eval} }", {
                                         "end": 43,
                                         "name": "eval"
                                     },
-                                    "kind": "init",
                                     "value": {
                                         "type": "Identifier",
                                         "start": 39,
                                         "end": 43,
                                         "name": "eval"
-                                    }
+                                    },
+                                    "kind": "init"
                                 }
                             ]
                         }
@@ -15360,13 +15458,13 @@ test("function foo() { return {yield} }", {
                                         "end": 30,
                                         "name": "yield"
                                     },
-                                    "kind": "init",
                                     "value": {
                                         "type": "Identifier",
                                         "start": 25,
                                         "end": 30,
                                         "name": "yield"
-                                    }
+                                    },
+                                    "kind": "init"
                                 }
                             ]
                         }
@@ -15529,7 +15627,6 @@ test("({*yield() {}})", {
                             "end": 8,
                             "name": "yield"
                         },
-                        "kind": "init",
                         "value": {
                             "type": "FunctionExpression",
                             "start": 8,
@@ -15544,7 +15641,8 @@ test("({*yield() {}})", {
                                 "end": 13,
                                 "body": []
                             }
-                        }
+                        },
+                        "kind": "init"
                     }
                 ]
             }
@@ -15748,7 +15846,6 @@ test("function* foo(a = {*bar() { yield b }}) {}", {
                   "end": 23,
                   "name": "bar"
                 },
-                "kind": "init",
                 "value": {
                   "type": "FunctionExpression",
                   "start": 23,
@@ -15781,7 +15878,8 @@ test("function* foo(a = {*bar() { yield b }}) {}", {
                       }
                     ]
                   }
-                }
+                },
+                "kind": "init"
               }
             ]
           }
@@ -16010,7 +16108,6 @@ test("function* wrap() {\n({a = yield b} = obj)\n}", {
                       "end": 22,
                       "name": "a"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "start": 21,
@@ -16033,7 +16130,8 @@ test("function* wrap() {\n({a = yield b} = obj)\n}", {
                           "name": "b"
                         }
                       }
-                    }
+                    },
+                    "kind": "init"
                   }
                 ]
               },
@@ -16159,7 +16257,7 @@ testFail("'use strict'; bar: function x() {}", "Unexpected token (1:19)", {ecmaV
 testFail("'use strict'; bar: function* x() {}", "Unexpected token (1:19)", {ecmaVersion: 6})
 testFail("bar: function* x() {}", "Unexpected token (1:13)", {ecmaVersion: 6})
 
-testFail("({x, y}) = {}", "Parenthesized pattern (1:0)", {ecmaVersion: 6})
+testFail("({x, y}) = {}", "Assigning to rvalue (1:0)", {ecmaVersion: 6})
 
 test("[x, (y), {z, u: (v)}] = foo", {}, {ecmaVersion: 6})
 
@@ -16334,6 +16432,7 @@ testFail("class A extends B { constructor() { super } }", "Unexpected token (1:4
 testFail("class A extends B { constructor() { super; } }", "Unexpected token (1:41)", { ecmaVersion: 6 })
 testFail("class A extends B { constructor() { (super)() } }", "Unexpected token (1:42)", { ecmaVersion: 6 })
 testFail("class A extends B { foo() { (super).foo } }", "Unexpected token (1:34)", { ecmaVersion: 6 })
+testFail("class A extends B { constructor() { new super() } }", "Invalid use of 'super' (1:40)", {ecmaVersion: 6})
 test("({super: 1})", {}, { ecmaVersion: 6 })
 test("import {super as a} from 'a'", {}, { ecmaVersion: 6, sourceType: "module" })
 test("function a() {} export {a as super}", {}, { ecmaVersion: 6, sourceType: "module" })
@@ -16519,6 +16618,9 @@ test("({ __proto__: x, __proto__: y, __proto__: z }) => {}", {}, {ecmaVersion: 6
 test("class x {}\n05", {}, {ecmaVersion: 6})
 test("function x() { 'use strict' }\n05", {}, {ecmaVersion: 6})
 
+// Ignore strict directives before ES5
+test("'use strict'; '\\02'", {}, {ecmaVersion: 3})
+
 test("const myFn = ({ set = '' }) => {};", {
   "type": "Program",
   "body": [
@@ -16543,7 +16645,6 @@ test("const myFn = ({ set = '' }) => {};", {
                       "type": "Identifier",
                       "name": "set"
                     },
-                    "kind": "init",
                     "value": {
                       "type": "AssignmentPattern",
                       "left": {
@@ -16554,7 +16655,8 @@ test("const myFn = ({ set = '' }) => {};", {
                         "type": "Literal",
                         "value": ""
                       }
-                    }
+                    },
+                    "kind": "init"
                   }
                 ]
               }
@@ -16879,3 +16981,56 @@ test("for (function (){ a in b };;);", {
     }
   ]
 }, { locations: true, ecmaVersion: 8, })
+
+// Test cases for #1453, via acornima's patch for the issue
+
+testFail("({a = 0}.x = 0);", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("({a = 0}.x += 0);", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("({a = 0}.x ??= 0);", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("[{a = 0}.x] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("[...{a = 0}.x] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:7)", {ecmaVersion: 6})
+testFail("({a: {b = 0}.x} = {});", "Shorthand property assignments are valid only in destructuring patterns (1:8)", {ecmaVersion: 6})
+testFail("({...{b = 0}.x} = {});", "Unexpected token (1:2)", {ecmaVersion: 6})
+testFail("[{a = 0}[0]] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("[{a = 0}].x = 0;", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("[[{a = 0}.x]] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:5)", {ecmaVersion: 6})
+testFail("({a: [{b = 0}.x]} = {});", "Shorthand property assignments are valid only in destructuring patterns (1:9)", {ecmaVersion: 6})
+testFail("([{a = 0}.x] = []);", "Shorthand property assignments are valid only in destructuring patterns (1:5)", {ecmaVersion: 6})
+testFail("[{a = 0}] = [{b = 0}.x] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:16)", {ecmaVersion: 6})
+testFail("[{a = 0}.x = 1] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("[{a = 0}, {b = 0}.x] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:13)", {ecmaVersion: 6})
+testFail("[{a = 0}.x, {b = 0}] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("for ([{a = 0}.x] of []) ;", "Shorthand property assignments are valid only in destructuring patterns (1:9)", {ecmaVersion: 6})
+testFail("for ({a = 0}.x of []) ;", "Shorthand property assignments are valid only in destructuring patterns (1:8)", {ecmaVersion: 6})
+testFail("for ([{a = 0}.x] in {}) ;", "Shorthand property assignments are valid only in destructuring patterns (1:9)", {ecmaVersion: 6})
+testFail("for ([{a = 0}.x] = [] ;;) ;", "Shorthand property assignments are valid only in destructuring patterns (1:9)", {ecmaVersion: 6})
+testFail("({a = 0});", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("f({a = 0});", "Shorthand property assignments are valid only in destructuring patterns (1:5)", {ecmaVersion: 6})
+testFail("[{a = 0}.x];", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("({a: {b = 0}.x});", "Shorthand property assignments are valid only in destructuring patterns (1:8)", {ecmaVersion: 6})
+testFail("({...{b = 0}.x});", "Unexpected token (1:2)", {ecmaVersion: 6})
+testFail("[({a = 0})] = [];", "Shorthand property assignments are valid only in destructuring patterns (1:5)", {ecmaVersion: 6})
+testFail("({a = 0}) = {};", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+testFail("f({a = 0}) = 0;", "Shorthand property assignments are valid only in destructuring patterns (1:5)", {ecmaVersion: 6})
+testFail("({a = 0} += 1);", "Assigning to rvalue (1:1)", {ecmaVersion: 6})
+testFail("[{a = 0}.x] += 1;", "Shorthand property assignments are valid only in destructuring patterns (1:4)", {ecmaVersion: 6})
+test("({a = 0} = {});", {}, {ecmaVersion: 6})
+test("[{a = 0}] = [];", {}, {ecmaVersion: 6})
+test("[{a = 0}, {b = 0}] = [];", {}, {ecmaVersion: 6})
+test("({a: {b = 0}} = {});", {}, {ecmaVersion: 6})
+test("[{a = 0} = 1] = [];", {}, {ecmaVersion: 6})
+test("[...{a = 0}] = [];", {}, {ecmaVersion: 6})
+test("for ([{a = 0}] of []) ;", {}, {ecmaVersion: 6})
+test("for ({a = 0} of [{}]) ;", {}, {ecmaVersion: 6})
+test("for ([{a = 0}] = [] ;;) ;", {}, {ecmaVersion: 6})
+test("({a = 0}) => 0;", {}, {ecmaVersion: 6})
+test("async ({a = 0}) => 0;", {}, {ecmaVersion: 2022})
+test("[{a: 0}.x] = [];", {}, {ecmaVersion: 6})
+
+testFail("(class arguments {})", "Binding arguments in strict mode (1:7)", {ecmaVersion: 6})
+testFail("(class eval {})", "Binding eval in strict mode (1:7)", {ecmaVersion: 6})
+
+test("let<!-- c\nx = 1", {"body": [{"type": "VariableDeclaration"}]}, {ecmaVersion: 6})
+test("let\n--> c\nx = 1", {"body": [{"type": "VariableDeclaration"}]}, {ecmaVersion: 6})
+
+testFail("const x\nof", "Missing initializer in const declaration (1:7)", {ecmaVersion: 6})

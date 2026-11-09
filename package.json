@@ -2,7 +2,7 @@
   "maintainers": [
     {
       "name": "Marijn Haverbeke",
-      "email": "marijnh@gmail.com",
+      "email": "marijn@haverbeke.berlin",
       "web": "http://marijnhaverbeke.nl"
     },
     {
@@ -21,26 +21,32 @@
   },
   "license": "MIT",
   "scripts": {
-    "prepare": "npm run test",
-    "test": "node test/run.js && node test/lint.js",
-    "pretest": "npm run build:main && npm run build:loose",
-    "test:test262": "node bin/run_test262.js",
     "build": "npm run build:main && npm run build:walk && npm run build:loose",
-    "build:main": "rollup -c acorn/rollup.config.js",
-    "build:walk": "rollup -c acorn-walk/rollup.config.js",
-    "build:loose": "rollup -c acorn-loose/rollup.config.js",
-    "lint": "eslint acorn/src/ acorn-walk/src/ acorn-loose/src/"
+    "build:loose": "rollup -c acorn-loose/rollup.config.mjs",
+    "build:main": "rollup -c acorn/rollup.config.mjs",
+    "build:walk": "rollup -c acorn-walk/rollup.config.mjs",
+    "generate": "npm run generate:identifier-regex && npm run generate:unicode-script-values",
+    "generate:identifier-regex": "node bin/generate-identifier-regex.js",
+    "generate:unicode-script-values": "node bin/generate-unicode-script-values.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "npm run test",
+    "pretest": "npm run build:main && npm run build:loose",
+    "test": "node test/run.js",
+    "test:test262": "node bin/run_test262.js"
   },
   "devDependencies": {
-    "@rollup/plugin-buble": "^0.21.3",
-    "@unicode/unicode-14.0.0": "^1.2.1",
-    "eslint": "^7.32.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0",
-    "rollup": "^2.60.2",
-    "test262": "git+https://github.com/tc39/test262.git#1f16a6ad0edd10e774e336d8b331471b0c3bb360",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "@eslint/js": "^9.39.2",
+    "@rollup/plugin-buble": "^1.0.3",
+    "@unicode/unicode-18.0.0": "^2.0.7",
+    "eslint": "^9.39.2",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-n": "^17.23.1",
+    "neostandard": "^0.13.0",
+    "rollup": "^4.60.1",
+    "test262": "git+https://github.com/tc39/test262.git#2b2ecead6e828dd9af13a9ec72065e645724a50f",
     "test262-parser-runner": "^0.5.0"
   }
 }

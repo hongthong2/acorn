@@ -271,7 +271,8 @@ lp.parseExprAtom = function() {
     node = this.startNode()
     node.value = this.tok.value
     node.raw = this.input.slice(this.tok.start, this.tok.end)
-    if (this.tok.type === tt.num && node.raw.charCodeAt(node.raw.length - 1) === 110) node.bigint = node.raw.slice(0, -1).replace(/_/g, "")
+    if (this.tok.type === tt.num && node.raw.charCodeAt(node.raw.length - 1) === 110)
+      node.bigint = node.value != null ? node.value.toString() : node.raw.slice(0, -1).replace(/_/g, "")
     this.next()
     return this.finishNode(node, "Literal")
 
@@ -352,7 +353,9 @@ lp.parseExprImport = function() {
 }
 
 lp.parseDynamicImport = function(node) {
-  node.source = this.parseExprList(tt.parenR)[0] || this.dummyString()
+  const list = this.parseExprList(tt.parenR)
+  node.source = list[0] || this.dummyString()
+  node.options = list[1] || null
   return this.finishNode(node, "ImportExpression")
 }
 
@@ -519,6 +522,7 @@ lp.parsePropertyAccessor = function() {
 lp.parseIdent = function() {
   let name = this.tok.type === tt.name ? this.tok.value : this.tok.type.keyword
   if (!name) return this.dummyIdent()
+  if (this.tok.type.keyword) this.toks.type = tt.name
   let node = this.startNode()
   this.next()
   node.name = name

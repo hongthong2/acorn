@@ -1,9 +1,9 @@
 // Tests largely based on those of Esprima
 // (http://esprima.org/test/)
 
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var driver = require("./driver.js");
-  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert, misMatch = driver.misMatch;
+  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert;
   var acorn = require("../acorn");
 }
 
@@ -6928,8 +6928,8 @@ test("\"Hello\\\u2028world\"", {
             column: 0
           },
           end: {
-            line: 1,
-            column: 14
+            line: 2,
+            column: 6
           }
         }
       },
@@ -6939,8 +6939,8 @@ test("\"Hello\\\u2028world\"", {
           column: 0
         },
         end: {
-          line: 1,
-          column: 14
+          line: 2,
+          column: 6
         }
       }
     }
@@ -6951,8 +6951,8 @@ test("\"Hello\\\u2028world\"", {
       column: 0
     },
     end: {
-      line: 1,
-      column: 14
+      line: 2,
+      column: 6
     }
   }
 });
@@ -6972,8 +6972,8 @@ test("\"Hello\\\u2029world\"", {
             column: 0
           },
           end: {
-            line: 1,
-            column: 14
+            line: 2,
+            column: 6
           }
         }
       },
@@ -6983,8 +6983,8 @@ test("\"Hello\\\u2029world\"", {
           column: 0
         },
         end: {
-          line: 1,
-          column: 14
+          line: 2,
+          column: 6
         }
       }
     }
@@ -6995,8 +6995,8 @@ test("\"Hello\\\u2029world\"", {
       column: 0
     },
     end: {
-      line: 1,
-      column: 14
+      line: 2,
+      column: 6
     }
   }
 });
@@ -27174,7 +27174,7 @@ testFail("func() = 4",
          "Assigning to rvalue (1:0)");
 
 testFail("(1 + 1) = 10",
-         "Parenthesized pattern (1:0)");
+         "Assigning to rvalue (1:0)");
 
 testFail("1++",
          "Assigning to rvalue (1:0)");
@@ -27189,7 +27189,7 @@ testFail("--1",
          "Assigning to rvalue (1:2)");
 
 testFail("for((1 + 1) in list) process(x);",
-         "Parenthesized pattern (1:4)");
+         "Assigning to rvalue (1:4)");
 
 testFail("[",
          "Unexpected token (1:1)");
@@ -27458,7 +27458,7 @@ testFail("\"\\u",
          "Bad character escape sequence (1:3)");
 
 testFail("return",
-         "'return' outside of function (1:0)");
+         "'return' outside of function (1:0)", { commonjs: false });
 
 testFail("break",
          "Unsyntactic break (1:0)");
@@ -28981,7 +28981,7 @@ test("const x = 14, y = 3, z = 1977", {
   }
 }, {ecmaVersion: 6, locations: true});
 
-testFail("const a;", "Unexpected token (1:7)", {ecmaVersion: 6});
+testFail("const a;", "Missing initializer in const declaration (1:7)", {ecmaVersion: 6});
 
 test("for(const x = 0;;);", {
   type: "Program",
@@ -29277,7 +29277,7 @@ var semicolons = []
 testAssert("var x\nreturn\n10", function() {
   var result = semicolons.join(" ");
   semicolons.length = 0;
-  if (result != "5 12 15")
+  if (result !== "5 12 15")
     return "Unexpected result for onInsertedSemicolon: " + result;
 }, {onInsertedSemicolon: function(pos) { semicolons.push(pos); },
     allowReturnOutsideFunction: true,
@@ -29287,7 +29287,7 @@ var trailingCommas = []
 testAssert("[1,2,] + {foo: 1,}", function() {
   var result = trailingCommas.join(" ");
   trailingCommas.length = 0;
-  if (result != "4 16")
+  if (result !== "4 16")
     return "Unexpected result for onTrailingComma: " + result;
 }, {onTrailingComma: function(pos) { trailingCommas.push(pos); },
     loose: false})
@@ -29437,7 +29437,7 @@ testFail("for (x \\u006ff y) {}", "Unexpected token (1:7)", {ecmaVersion: 6})
 testFail("function x () { new.ta\\u0072get }", "'new.target' must not contain escaped characters (1:16)", {ecmaVersion: 6})
 testFail("class X { st\\u0061tic y() {} }", "Unexpected token (1:22)", {ecmaVersion: 6})
 
-testFail("(x=1)=2", "Parenthesized pattern (1:0)")
+testFail("(x=1)=2", "Assigning to rvalue (1:0)")
 testFail("(x=1)=2", "Assigning to rvalue (1:1)", {ecmaVersion: 6})
 
 test("(foo = [])[0] = 4;", {})
@@ -29929,3 +29929,44 @@ test(`typeof async function f(){}
 
 testFail(`typeof async function f(){}
 /foo/`, "Unexpected token (2:5)", { ecmaVersion: 8, locations: true })
+
+test("foo.if() / 2", {
+  type: "Program",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "BinaryExpression",
+        left: {
+          type: "CallExpression",
+          callee: {
+            type: "MemberExpression",
+            object: {
+              type: "Identifier",
+              name: "foo"
+            },
+            property: {
+              type: "Identifier",
+              name: "if"
+            },
+            computed: false
+          },
+          arguments: []
+        },
+        operator: "/",
+        right: {
+          type: "Literal",
+          value: 2,
+          raw: "2"
+        }
+      }
+    }
+  ],
+  sourceType: "script"
+}, {
+  ecmaVersion: 5
+})
+
+test("({a: /=/})", {}, {ecmaVersion: 5})
+
+testFail("[".repeat(2000) + "1" + "]".repeat(2000), "~Not enough stack space", {ecmaVersion: "latest"})

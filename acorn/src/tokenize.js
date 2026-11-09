@@ -1,9 +1,10 @@
 import {isIdentifierStart, isIdentifierChar} from "./identifier.js"
-import {types as tt, keywords as keywordTypes} from "./tokentype.js"
+import {types as tt, getKeyword} from "./tokentype.js"
 import {Parser} from "./state.js"
 import {SourceLocation} from "./locutil.js"
 import {RegExpValidationState} from "./regexp.js"
 import {lineBreak, nextLineBreak, isNewLine, nonASCIIwhitespace} from "./whitespace.js"
+import {codePointToString} from "./util.js"
 
 // Object type used to represent tokens. Note that normally, tokens
 // simply exist as properties on the parser object. This is only
@@ -87,11 +88,15 @@ pp.readToken = function(code) {
   return this.getTokenFromCode(code)
 }
 
-pp.fullCharCodeAtPos = function() {
-  let code = this.input.charCodeAt(this.pos)
+pp.fullCharCodeAt = function(pos) {
+  let code = this.input.charCodeAt(pos)
   if (code <= 0xd7ff || code >= 0xdc00) return code
-  let next = this.input.charCodeAt(this.pos + 1)
+  let next = this.input.charCodeAt(pos + 1)
   return next <= 0xdbff || next >= 0xe000 ? code : (code << 10) + next - 0x35fdc00
+}
+
+pp.fullCharCodeAtPos = function() {
+  return this.fullCharCodeAt(this.pos)
 }
 
 pp.skipBlockComment = function() {
@@ -562,13 +567,6 @@ pp.readCodePoint = function() {
   return code
 }
 
-function codePointToString(code) {
-  // UTF-16 Decoding
-  if (code <= 0xFFFF) return String.fromCharCode(code)
-  code -= 0x10000
-  return String.fromCharCode((code >> 10) + 0xD800, (code & 1023) + 0xDC00)
-}
-
 pp.readString = function(quote) {
   let out = "", chunkStart = ++this.pos
   for (;;) {
@@ -677,15 +675,18 @@ pp.readInvalidTemplateToken = function() {
       break
 
     case "$":
-      if (this.input[this.pos + 1] !== "{") {
-        break
-      }
-
-    // falls through
+      if (this.input[this.pos + 1] !== "{") break
+      // fall through
     case "`":
       return this.finishToken(tt.invalidTemplate, this.input.slice(this.start, this.pos))
 
-    // no default
+    case "\r":
+      if (this.input[this.pos + 1] === "\n") ++this.pos
+      // fall through
+    case "\n": case "\u2028": case "\u2029":
+      ++this.curLine
+      this.lineStart = this.pos + 1
+      break
     }
   }
   this.raise(this.start, "Unterminated template")
@@ -724,8 +725,6 @@ pp.readEscapedChar = function(inTemplate) {
         codePos,
         "Invalid escape sequence in template string"
       )
-
-      return null
     }
   default:
     if (ch >= 48 && ch <= 55) {
@@ -750,6 +749,7 @@ pp.readEscapedChar = function(inTemplate) {
     if (isNewLine(ch)) {
       // Unicode new line characters after \ get removed from output in both
       // template literals and strings
+      if (this.options.locations) { this.lineStart = this.pos; ++this.curLine }
       return ""
     }
     return String.fromCharCode(ch)
@@ -806,7 +806,8 @@ pp.readWord = function() {
   let word = this.readWord1()
   let type = tt.name
   if (this.keywords.test(word)) {
-    type = keywordTypes[word]
+    let kw = getKeyword(word)
+    if (!this.containsEsc || (kw !== tt._in && kw !== tt._instanceof)) type = kw
   }
   return this.finishToken(type, word)
 }

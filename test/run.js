@@ -14,10 +14,13 @@
   require("./tests-regexp-2018.js");
   require("./tests-regexp-2020.js");
   require("./tests-regexp-2022.js");
+  require("./tests-regexp-2024.js");
+  require("./tests-regexp-2025.js");
   require("./tests-json-superset.js");
   require("./tests-optional-catch-binding.js");
   require("./tests-bigint.js");
   require("./tests-dynamic-import.js");
+  require("./tests-export-named.js");
   require("./tests-export-all-as-ns-from-source.js");
   require("./tests-import-meta.js");
   require("./tests-nullish-coalescing.js");
@@ -25,6 +28,10 @@
   require("./tests-logical-assignment-operators.js");
   require("./tests-numeric-separators.js");
   require("./tests-class-features-2022.js");
+  require("./tests-module-string-names.js");
+  require("./tests-import-attributes.js");
+  require("./tests-using.js");
+  require("./tests-commonjs.js");
   var acorn = require("../acorn")
   var acorn_loose = require("../acorn-loose")
 
@@ -78,11 +85,33 @@
           return opts.loose !== false;
         }
       }
+    },
+
+    // Test whether the test for `sourceType: 'script'` produces the same result for `'commonjs'`.
+    'Normal with sourceType: commonjs': {
+      config: {
+        parse: (code, option) => acorn.parse(code, Object.assign({}, option, { sourceType: 'commonjs' })),
+        filter: function (test) {
+          var opts = test.options || {};
+          return opts.commonjs !== false && !opts.allowAwaitOutsideFunction && (!opts.sourceType || opts.sourceType === 'script');
+        }
+      }
+    },
+    'Loose with sourceType: commonjs': {
+      config: {
+        parse: (code, option) => acorn_loose.parse(code, Object.assign({}, option, { sourceType: 'commonjs' })),
+        loose: true,
+        filter: function (test) {
+          var opts = test.options || {};
+          if (opts.loose === false) return false;
+          return opts.commonjs !== false && !opts.allowAwaitOutsideFunction && (!opts.sourceType || opts.sourceType === 'script');
+        }
+      }
     }
   };
 
   function report(state, code, message) {
-    if (state != "ok") {++stats.failed; log(code, message);}
+    if (state !== "ok") {++stats.failed; log(code, message);}
     ++stats.testsRun;
   }
 

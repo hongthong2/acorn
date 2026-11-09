@@ -1,8 +1,8 @@
 
-if (typeof exports != "undefined") {
+if (typeof exports !== "undefined") {
   var driver = require("./driver.js");
-  var test = driver.test, testFail = driver.testFail, testAssert = driver.testAssert, misMatch = driver.misMatch;
-  var acorn = require("../acorn");
+  var test = driver.test;
+  var testFail = driver.testFail;
 }
 
 //------------------------------------------------------------------------
@@ -551,7 +551,6 @@ test("({ wrap() { \"use strict\"; foo } })", {
               "end": 7,
               "name": "wrap"
             },
-            "kind": "init",
             "value": {
               "type": "FunctionExpression",
               "start": 7,
@@ -592,7 +591,8 @@ test("({ wrap() { \"use strict\"; foo } })", {
                   }
                 ]
               }
-            }
+            },
+            "kind": "init"
           }
         ]
       },
@@ -1385,3 +1385,8 @@ test("(a = () => { \"use strict\"; foo }) => { \"use strict\" }", {
     }
   ]
 }, { ecmaVersion: 6 })
+
+testFail(
+  "function invalid() { \"\\7\\\n\"; \"use strict\"; }",
+  "Octal literal in strict mode (1:22)",
+  { ecmaVersion: 6 })

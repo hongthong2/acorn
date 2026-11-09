@@ -20,9 +20,7 @@ Acorn is open source software released under an
 
 You are welcome to [report
 bugs](https://github.com/acornjs/acorn/issues) or create pull requests
-on [github](https://github.com/acornjs/acorn). For questions and
-discussion, please use the [Tern discussion
-forum](https://discuss.ternjs.net).
+on [github](https://github.com/acornjs/acorn).
 
 ## Installation
 
@@ -51,8 +49,8 @@ placeholders in places where it can't make sense of the input. Depends
 on the `acorn` package, because it uses the same tokenizer.
 
 ```javascript
-var acornLoose = require("acorn-loose");
-console.log(acornLoose.parse("1 / * 4 )[2]", {ecmaVersion: 2020}));
+import * as acornLoose from "acorn-loose"
+console.log(acornLoose.parse("1 / * 4 )[2]", {ecmaVersion: 2020}))
 ```
 
 Like the regular parser, the loose parser supports plugins. You can

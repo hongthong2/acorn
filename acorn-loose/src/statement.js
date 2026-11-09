@@ -10,7 +10,7 @@ lp.parseTopLevel = function() {
   while (this.tok.type !== tt.eof) node.body.push(this.parseStatement())
   this.toks.adaptDirectivePrologue(node.body)
   this.last = this.tok
-  node.sourceType = this.options.sourceType
+  node.sourceType = this.options.sourceType === "commonjs" ? "script" : this.options.sourceType
   return this.finishNode(node, "Program")
 }
 
@@ -54,8 +54,19 @@ lp.parseStatement = function() {
     this.expect(tt.parenL)
     if (this.tok.type === tt.semi) return this.parseFor(node, null)
     let isLet = this.toks.isLet()
-    if (isLet || this.tok.type === tt._var || this.tok.type === tt._const) {
-      let init = this.parseVar(this.startNode(), true, isLet ? "let" : this.tok.value)
+    let isAwaitUsing = this.toks.isAwaitUsing(true)
+    let isUsing = !isAwaitUsing && this.toks.isUsing(true)
+
+    if (isLet || this.tok.type === tt._var || this.tok.type === tt._const || isUsing || isAwaitUsing) {
+      let kind = isLet ? "let" : isUsing ? "using" : isAwaitUsing ? "await using" : this.tok.value
+      let init = this.startNode()
+      if (isUsing || isAwaitUsing) {
+        if (isAwaitUsing) this.next()
+        this.parseVar(init, true, kind)
+      } else {
+        init = this.parseVar(init, true, kind)
+      }
+
       if (init.declarations.length === 1 && (this.tok.type === tt._in || this.isContextual("of"))) {
         if (this.options.ecmaVersion >= 9 && this.tok.type !== tt._in) {
           node.await = isAwait
@@ -196,6 +207,16 @@ lp.parseStatement = function() {
       this.next()
       return this.parseFunction(node, true, true)
     }
+
+    if (this.toks.isUsing(false)) {
+      return this.parseVar(node, false, "using")
+    }
+
+    if (this.toks.isAwaitUsing(false)) {
+      this.next()
+      return this.parseVar(node, false, "await using")
+    }
+
     let expr = this.parseExpression()
     if (isDummy(expr)) {
       this.next()
@@ -461,6 +482,8 @@ lp.parseExport = function() {
       }
     }
     node.source = this.eatContextual("from") ? this.parseExprAtom() : this.dummyString()
+    if (this.options.ecmaVersion >= 16)
+      node.attributes = this.parseWithClause()
     this.semicolon()
     return this.finishNode(node, "ExportAllDeclaration")
   }
@@ -488,6 +511,8 @@ lp.parseExport = function() {
     node.declaration = null
     node.specifiers = this.parseExportSpecifierList()
     node.source = this.eatContextual("from") ? this.parseExprAtom() : null
+    if (this.options.ecmaVersion >= 16)
+      node.attributes = this.parseWithClause()
     this.semicolon()
   }
   return this.finishNode(node, "ExportNamedDeclaration")
@@ -511,6 +536,8 @@ lp.parseImport = function() {
     node.source = this.eatContextual("from") && this.tok.type === tt.string ? this.parseExprAtom() : this.dummyString()
     if (elt) node.specifiers.unshift(elt)
   }
+  if (this.options.ecmaVersion >= 16)
+    node.attributes = this.parseWithClause()
   this.semicolon()
   return this.finishNode(node, "ImportDeclaration")
 }
@@ -530,13 +557,13 @@ lp.parseImportSpecifiers = function() {
     while (!this.closes(tt.braceR, indent + (this.curLineStart <= continuedLine ? 1 : 0), line)) {
       let elt = this.startNode()
       if (this.eat(tt.star)) {
-        elt.local = this.eatContextual("as") ? this.parseIdent() : this.dummyIdent()
+        elt.local = this.eatContextual("as") ? this.parseModuleExportName() : this.dummyIdent()
         this.finishNode(elt, "ImportNamespaceSpecifier")
       } else {
         if (this.isContextual("from")) break
-        elt.imported = this.parseIdent()
+        elt.imported = this.parseModuleExportName()
         if (isDummy(elt.imported)) break
-        elt.local = this.eatContextual("as") ? this.parseIdent() : elt.imported
+        elt.local = this.eatContextual("as") ? this.parseModuleExportName() : elt.imported
         this.finishNode(elt, "ImportSpecifier")
       }
       elts.push(elt)
@@ -548,6 +575,37 @@ lp.parseImportSpecifiers = function() {
   return elts
 }
 
+lp.parseWithClause = function() {
+  let nodes = []
+  if (!this.eat(tt._with)) {
+    return nodes
+  }
+
+  let indent = this.curIndent, line = this.curLineStart, continuedLine = this.nextLineStart
+  this.pushCx()
+  this.eat(tt.braceL)
+  if (this.curLineStart > continuedLine) continuedLine = this.curLineStart
+  while (!this.closes(tt.braceR, indent + (this.curLineStart <= continuedLine ? 1 : 0), line)) {
+    const attr = this.startNode()
+    attr.key = this.tok.type === tt.string ? this.parseExprAtom() : this.parseIdent()
+    if (this.eat(tt.colon)) {
+      if (this.tok.type === tt.string)
+        attr.value = this.parseExprAtom()
+      else attr.value = this.dummyString()
+    } else {
+      if (isDummy(attr.key)) break
+      if (this.tok.type === tt.string)
+        attr.value = this.parseExprAtom()
+      else break
+    }
+    nodes.push(this.finishNode(attr, "ImportAttribute"))
+    this.eat(tt.comma)
+  }
+  this.eat(tt.braceR)
+  this.popCx()
+  return nodes
+}
+
 lp.parseExportSpecifierList = function() {
   let elts = []
   let indent = this.curIndent, line = this.curLineStart, continuedLine = this.nextLineStart
@@ -557,9 +615,9 @@ lp.parseExportSpecifierList = function() {
   while (!this.closes(tt.braceR, indent + (this.curLineStart <= continuedLine ? 1 : 0), line)) {
     if (this.isContextual("from")) break
     let elt = this.startNode()
-    elt.local = this.parseIdent()
+    elt.local = this.parseModuleExportName()
     if (isDummy(elt.local)) break
-    elt.exported = this.eatContextual("as") ? this.parseIdent() : elt.local
+    elt.exported = this.eatContextual("as") ? this.parseModuleExportName() : elt.local
     this.finishNode(elt, "ExportSpecifier")
     elts.push(elt)
     this.eat(tt.comma)
@@ -567,4 +625,10 @@ lp.parseExportSpecifierList = function() {
   this.eat(tt.braceR)
   this.popCx()
   return elts
+}
+
+lp.parseModuleExportName = function() {
+  return this.options.ecmaVersion >= 13 && this.tok.type === tt.string
+    ? this.parseExprAtom()
+    : this.parseIdent()
 }
